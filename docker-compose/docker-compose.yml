@@ -1,0 +1,24 @@
+version: '3.4'
+
+services:
+  WebApplication1.app:
+    image: ${DOCKER_REGISTRY-}webapplication1
+    container_name: webapplication1
+    build:
+      context: ../
+      dockerfile: WebApplication1/Dockerfile
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+
+  WebApplication1.database:
+    image: postgres:latest
+    container_name: webApi.database
+    environment:
+      - POSTGRES_DB=NewCreation
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=PigGod104!
+    volumes:
+      - ./containers/products-db:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
