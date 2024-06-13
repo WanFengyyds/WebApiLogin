@@ -86,18 +86,27 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast")
 .WithOpenApi();
 
-app.MapPost("/ollama", async ([FromBody] MessageModel model) =>
+app.MapPost("/ollama", async (HttpContext context, [FromBody] MessageModel model) =>
 {
-    var entireMessage = "";
-    var chat = ollama.Chat(stream =>
+    context.Response.ContentType = "text/event-stream";
+    await context.Response.Body.FlushAsync();
+
+    var chat = ollama.Chat(async stream =>
     {
         if (!stream.Done)
         {
-            entireMessage += stream.Message?.Content ?? "";
+            var messagePart = stream.Message?.Content ?? "";
+            if (!string.IsNullOrEmpty(messagePart))
+            {
+                await context.Response.WriteAsync($"data: {messagePart}\n\n");
+                await context.Response.Body.FlushAsync();
+            }
         }
     });
     await chat.Send(model.messaggio);
-    return entireMessage;
+
+    // Ensure the response is completed
+    await context.Response.Body.FlushAsync();
 })
 
     .RequireAuthorization()
